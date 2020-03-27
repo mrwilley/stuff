@@ -56,6 +56,13 @@ class Player():
                 self.sprinter_discard, self.draw_amount, 
                 self.sprinter_select, self.sprinter_turn)
     
+    def r_exhaust(self):
+        self.add_exhaust(self.roller_discard)
+    
+    def s_exhaust(self):
+        self.add_exhaust(self.sprinter_discard)
+    
+    
 
     def build(self, deck_dict):
         card_list = []
@@ -92,18 +99,32 @@ class Player():
 
             return False
 
-    def reveal_choice(self, r_value, s_value):
-        print('\nYour Roller is moving ', r_value)
-        print('\nYour Sprinter is moving ', s_value)
+    def reveal_choice(self):
+        print('\nYour Roller is moving ', self.roller_select.cards[0])
+        print('\nYour Sprinter is moving ', self.sprinter_select.cards[0])
         
     def add_exhaust(self, discard):
         discard.cards.append(Card('Ex-2'))
             
     def reshuffle_discard(self, discard, deck):
-        for c in discard.cards:
+        for c in range(len(discard.cards)):
             deck.cards.append(discard.draw_card())
         deck.shuffle()
 
+    
+    def end_turn(self):
+        #Need to send each selected card to removed
+        self.roller_turn = self.remove_roller_select()
+        self.sprinter_turn = self.remove_sprinter_select()
+
+    
+    def remove_roller_select(self):
+        self.roller_removed.cards.append(self.roller_select.draw_card())
+        return True
+    
+    def remove_sprinter_select(self):
+        self.sprinter_removed.cards.append(self.sprinter_select.draw_card())
+        return True
     
     def select_card_to_play(self, hand, select, discard):
         selecting = True
@@ -190,3 +211,15 @@ class Card:
     
     def __repr__(self):
         return str(self.value)
+
+def deck_status():
+    print('\n Draw deck')
+    bob.roller_draw.show()
+    print('\n Hand deck')
+    bob.roller_hand.show()
+    print('\n Select deck')
+    bob.roller_select.show()
+    print('\n Discard deck')
+    bob.roller_discard.show()
+    print('\n Removed deck')
+    bob.roller_removed.show()
