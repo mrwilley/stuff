@@ -15,54 +15,45 @@ Created on Wed Mar 18 23:04:23 2020
 import random
 
 
+class MasterDeck():
+    def __init__(self, deck_name, cards):
+        self.name = deck_name
+
+        # Create card areas
+        self.draw = Deck()
+        self.draw.add_to_deck(cards)
+        self.draw.shuffle()
+        self.removed = Deck()
+        self.hand = Deck()
+        self.select = Deck()
+        self.discard = Deck()
+        self.turn = True
+
+
 class Player():
     def __init__(self):
         
         self.draw_amount = 4
         
         # Make the roller and sprinter cards
-        self.roller_cards = self.build({3:3, 4:3, 5:3, 6:3, 7:3})
-        self.sprinter_cards = self.build({2:3, 3:3, 4:3, 5:3, 9:3})
+        roller_cards = self.build({3:3, 4:3, 5:3, 6:3, 7:3})
+        sprinter_cards = self.build({2:3, 3:3, 4:3, 5:3, 9:3})
         
         # Create roller card areas
-        self.roller_draw = Deck()
-        self.roller_draw.add_to_deck(self.roller_cards)
-        self.roller_draw.shuffle()
-        self.roller_removed = Deck()
-        self.roller_hand = Deck()
-        self.roller_select = Deck()
-        self.roller_discard = Deck()
-        self.roller_turn = True
+        self.roller = MasterDeck("roller", roller_cards)
         
         #Create sprinter card areas
-        self.sprinter_draw = Deck()
-        self.sprinter_draw.add_to_deck(self.sprinter_cards)
-        self.sprinter_draw.shuffle()
-        self.sprinter_removed = Deck()
-        self.sprinter_hand = Deck()
-        self.sprinter_select = Deck()
-        self.sprinter_discard = Deck()
-        self.sprinter_turn = True
+        self.sprinter = MasterDeck("sprinter", sprinter_cards)
         
-    def r_draw(self):
-        self.roller_turn = self.draw_hand(
-                self.roller_hand, self.sprinter_hand, self.roller_draw,
-                self.roller_discard, self.draw_amount, self.roller_select,
-                self.roller_turn)
-
-    def s_draw(self):
-        self.sprinter_turn = self.draw_hand(
-                self.sprinter_hand, self.roller_hand, self.sprinter_draw,
-                self.sprinter_discard, self.draw_amount, 
-                self.sprinter_select, self.sprinter_turn)
+    def draw(self, deck_name):
+        if deck_name == 'roller':
+            self.draw_hand(self.roller, self.draw_amount)
+        else:
+            self.draw_hand(self.sprinter, self.draw_amount)
     
-    def r_exhaust(self):
-        self.add_exhaust(self.roller_discard)
-    
-    def s_exhaust(self):
-        self.add_exhaust(self.sprinter_discard)
-    
-    
+    def exhaust(self, discard_deck):
+        # discard_deck, e.g. self.roller.discard
+        self.add_exhaust(discard_deck)
 
     def build(self, deck_dict):
         card_list = []
@@ -71,37 +62,35 @@ class Player():
                 card_list.append(Card(k))
         return card_list
 
-
     def check_remain(self, deck):
         return len(deck.cards)
 
-
-    def draw_hand(self, hand, oppo_hand, deck, discard, draw_amount, select,
-                  turn):
-        if self.check_remain(oppo_hand) > 0:
+    def draw_hand(self, deck, draw_amount, chosen_value=None):
+        oppo = self.sprinter if deck == self.roller else self.roller
+        if self.check_remain(oppo.hand) > 0:
             print('Must select a card from your drawn hand before drawing\
                   from this deck.')
-        elif turn == False:
+        elif deck.turn == False:
             print('You have already made the selection for this deck this turn.')
         else:
-            for d in range(1, draw_amount + 1):
-                if self.check_remain(deck) <= 0:
-                    if self.check_remain(discard) <= 0:
+            for d in range(draw_amount):
+                if self.check_remain(deck.draw) <= 0:
+                    if self.check_remain(deck.discard) <= 0:
                         break
                     else:
-                        self.reshuffle_discard(discard, deck)
-                hand.cards.append(deck.draw_card())
+                        self.reshuffle_discard(deck.discard, deck.draw)
+                deck.hand.cards.append(deck.draw.draw_card())
             
             print('\nYou have drawn the cards...\n')
-            hand.show()
+            deck.hand.show()
             
-            self.select_card_to_play(hand, select, discard)
+            self.select_card_to_play(deck.hand, deck.select, deck.discard, chosen_value)
 
-            return False
+            deck.turn = False
 
     def reveal_choice(self):
-        print('\nYour Roller is moving ', self.roller_select.cards[0])
-        print('\nYour Sprinter is moving ', self.sprinter_select.cards[0])
+        print('\nYour Roller is moving {0}'.format(self.roller.select.cards[0]))
+        print('\nYour Sprinter is moving {0}'.format(self.sprinter.select.cards[0]))
         
     def add_exhaust(self, discard):
         discard.cards.append(Card('Ex-2'))
@@ -111,26 +100,21 @@ class Player():
             deck.cards.append(discard.draw_card())
         deck.shuffle()
 
-    
     def end_turn(self):
         #Need to send each selected card to removed
-        self.roller_turn = self.remove_roller_select()
-        self.sprinter_turn = self.remove_sprinter_select()
-
+        self.remove_select(self.roller)
+        self.remove_select(self.sprinter)
     
-    def remove_roller_select(self):
-        self.roller_removed.cards.append(self.roller_select.draw_card())
-        return True
+    def remove_select(self, master_deck):
+        master_deck.removed.cards.append(self.roller.select.draw_card())
+        master_deck.turn = True
     
-    def remove_sprinter_select(self):
-        self.sprinter_removed.cards.append(self.sprinter_select.draw_card())
-        return True
-    
-    def select_card_to_play(self, hand, select, discard):
+    def select_card_to_play(self, hand, select, discard, chosen_value=None):
         selecting = True
         while selecting:
-            print('Type your chosen value')
-            chosen_value = input()
+            if not chosen_value:
+                print('Type your chosen value')
+                chosen_value = input()
             if chosen_value == 'q':
                 break
             else:
@@ -141,45 +125,13 @@ class Player():
                     selecting = False
                     break
             if selecting == False:
-                # Dump remaing hand to discard
+                # Dump remaining hand to discard
                 for c in range(len(hand.cards)):
                     discard.cards.append(hand.draw_card(0))
             else:
                 print("I couldn't find that card. Please try and enter the \
                       value again. Or enter q to exit.")
                 
-
-class Muscle_Team:
-    def __init__(self): 
-        
-        self.draw_count = 1
-        
-        self.roller_draw = Deck({3:3, 4:3, 5:3, 6:3, 7:3})
-        self.roller_draw.shuffle()
-        self.roller_removed = []
-        self.roller_hand = []
-        self.roller_discard = []
-        
-        self.sprinter_draw = Deck({2:3, 3:3, 4:3, 5:4, 9:3})
-        self.sprinter_draw.shuffle()
-        self.sprinter_removed = []
-        self.sprinter_hand = []
-        self.sprinter_discard = []
-
-
-class Peloton_Team:
-    def __init__(self):
-        
-        self.draw_count = 1
-        
-        self.roller_draw = Deck({3:3, 4:3, 5:3, 6:3, 7:3, 'attack!':2})
-        self.roller_draw.shuffle()
-        
-        self.roller_draw = []
-        self.roller_removed = []
-        self.roller_hand = []
-        self.roller_discard = []
-
 
 class Deck:
     def __init__(self):
@@ -210,16 +162,19 @@ class Card:
         print(self.value)
     
     def __repr__(self):
+        return 'Card({0})'.format(self.value)
+
+    def __str__(self):
         return str(self.value)
 
 def deck_status():
     print('\n Draw deck')
-    bob.roller_draw.show()
+    bob.roller.draw.show()
     print('\n Hand deck')
-    bob.roller_hand.show()
+    bob.roller.hand.show()
     print('\n Select deck')
-    bob.roller_select.show()
+    bob.roller.select.show()
     print('\n Discard deck')
-    bob.roller_discard.show()
+    bob.roller.discard.show()
     print('\n Removed deck')
-    bob.roller_removed.show()
+    bob.roller.removed.show()
