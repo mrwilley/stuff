@@ -34,14 +34,17 @@ class Flamme_GUI():
         self.frame_r = Roller_Frame(self.parent)
         self.frame_r.grid(row = 1, column = 0, columnspan = 9)
         
-        self.frame_r = Sprinter_Frame(self.parent)
-        self.frame_r.grid(row = 2, column = 0, columnspan = 9)
+        self.frame_s = Sprinter_Frame(self.parent)
+        self.frame_s.grid(row = 2, column = 0, columnspan = 9)
         
         self.frame_pre_ex = Pre_Exhaust_Frame(self.parent)
-        self.frame_pre_ex.grid(row = 3, column = 0, columnspan = 4)
+        self.frame_pre_ex.grid(row = 3, column = 0, columnspan = 3)
+        
+        self.frame_turn = Turn_Frame(self.parent)
+        self.frame_turn.grid(row = 3, column = 3)
         
         self.frame_game_ex = Game_Exhaust_Frame(self.parent)
-        self.frame_game_ex.grid(row = 3, column = 5, columnspan = 4)
+        self.frame_game_ex.grid(row = 3, column = 5, columnspan = 3)
 
         
 
@@ -67,10 +70,10 @@ class Roller_Frame(tk.Frame):
         self.entry_1 = tk.Entry(self, textvariable = self.selected)
         
         self.button_1 = ttk.Button(self, text = 'Draw roller',
-                                   command = self.draw_roller)
+                                   command = self.draw_hand)
         
         self.button_2 = ttk.Button(self, text = 'Select roller',
-                                   command = self.select_roller)
+                                   command = self.select)
         
         self.listbox_1 = tk.Listbox(self)
         self.listbox_2 = tk.Listbox(self)
@@ -108,31 +111,33 @@ class Roller_Frame(tk.Frame):
     def setup(self):
         self.update_draw()
 
+    def update_game_state(self):
+        self.update_draw()
+        self.update_hand()
+        self.update_select()
+        self.update_discard()
+        self.update_removed()
+
     def next_turn(self):
-        pass
-        
-    def draw_roller(self):
+        player.remove_select(player.roller) 
+        self.update_game_state()
+
+                
+    def draw_hand(self):
         if player.roller.turn == True:
             player.draw_hand(player.roller, 4)
         
-            self.update_hand()
-        
-            self.clear_draw()
-            
-            self.update_draw()
+            self.update_game_state()
 
-    def select_roller(self):
+
+    def select(self):
         player.select_card_to_play(player.roller.hand, 
                                    player.roller.select, 
                                    player.roller.discard,
                                    self.selected.get())
-        self.clear_hand()
-        self.clear_draw()
-        self.update_draw()
-        self.update_select()
-        self.update_discard()
+        self.entry_1.delete(0, tk.END)
+        self.update_game_state()       
         
-#        self.entry_1.delete(0, tk.END)
 
     def clear_draw(self):
         self.listbox_1.delete(0, tk.END)
@@ -150,6 +155,7 @@ class Roller_Frame(tk.Frame):
         self.listbox_5.delete(0, tk.END)
 
     def update_draw(self):
+        self.clear_draw()
         draw_deck = []
         for c in player.roller.draw.cards:
             draw_deck.append(c.value)
@@ -158,6 +164,7 @@ class Roller_Frame(tk.Frame):
             self.listbox_1.insert(tk.END, c)
 
     def update_hand(self):
+        self.clear_hand()
         hand_deck = []
         for c in player.roller.hand.cards:
             hand_deck.append(c.value)
@@ -165,6 +172,7 @@ class Roller_Frame(tk.Frame):
             self.listbox_2.insert(tk.END, c)
 
     def update_discard(self):
+        self.clear_discard()
         discard_deck = []
         for c in player.roller.discard.cards:
             discard_deck.append(c.value)
@@ -172,6 +180,7 @@ class Roller_Frame(tk.Frame):
             self.listbox_3.insert(tk.END, c)
 
     def update_removed(self):
+        self.clear_removed()
         removed_deck = []
         for c in player.roller.removed.cards:
             removed_deck.append(c.value)
@@ -179,11 +188,12 @@ class Roller_Frame(tk.Frame):
             self.listbox_4.insert(tk.END, c)
 
     def update_select(self):
+        self.clear_select()
         select_deck = []
         for c in player.roller.select.cards:
             select_deck.append(c.value)
         for c in select_deck:
-            self.listbox_5.insert(tk.END, c) 
+            self.listbox_5.insert(tk.END, c)
 
 class Sprinter_Frame(tk.Frame):
     def __init__(self, parent):
@@ -207,10 +217,10 @@ class Sprinter_Frame(tk.Frame):
         self.entry_1 = tk.Entry(self, textvariable = self.selected)
         
         self.button_1 = ttk.Button(self, text = 'Draw sprinter',
-                                   command = self.draw_sprinter)
+                                   command = self.draw_hand)
         
         self.button_2 = ttk.Button(self, text = 'Select sprinter',
-                                   command = self.select_sprinter)
+                                   command = self.select)
         
         self.listbox_1 = tk.Listbox(self)
         self.listbox_2 = tk.Listbox(self)
@@ -246,14 +256,52 @@ class Sprinter_Frame(tk.Frame):
 
     def setup(self):
         self.update_draw()
-        
-    def draw_sprinter(self):
-        pass
 
-    def select_sprinter(self):
-        pass        
+    def update_game_state(self):
+        self.update_draw()
+        self.update_hand()
+        self.update_select()
+        self.update_discard()
+        self.update_removed()
+
+    def next_turn(self):
+        player.remove_select(player.sprinter) 
+        self.update_game_state()
+
+                
+    def draw_hand(self):
+        if player.sprinter.turn == True:
+            player.draw_hand(player.sprinter, 4)
+        
+            self.update_game_state()
+
+
+    def select(self):
+        player.select_card_to_play(player.sprinter.hand, 
+                                   player.sprinter.select, 
+                                   player.sprinter.discard,
+                                   self.selected.get())
+        self.entry_1.delete(0, tk.END)
+        self.update_game_state()       
+        
+
+    def clear_draw(self):
+        self.listbox_1.delete(0, tk.END)
+
+    def clear_hand(self):
+        self.listbox_2.delete(0, tk.END)
+    
+    def clear_discard(self):
+        self.listbox_3.delete(0, tk.END)
+
+    def clear_removed(self):
+        self.listbox_4.delete(0, tk.END)
+    
+    def clear_select(self):
+        self.listbox_5.delete(0, tk.END)
 
     def update_draw(self):
+        self.clear_draw()
         draw_deck = []
         for c in player.sprinter.draw.cards:
             draw_deck.append(c.value)
@@ -261,14 +309,71 @@ class Sprinter_Frame(tk.Frame):
         for c in draw_deck:
             self.listbox_1.insert(tk.END, c)
 
+    def update_hand(self):
+        self.clear_hand()
+        hand_deck = []
+        for c in player.sprinter.hand.cards:
+            hand_deck.append(c.value)
+        for c in hand_deck:
+            self.listbox_2.insert(tk.END, c)
+
     def update_discard(self):
-        pass
+        self.clear_discard()
+        discard_deck = []
+        for c in player.sprinter.discard.cards:
+            discard_deck.append(c.value)
+        for c in discard_deck:
+            self.listbox_3.insert(tk.END, c)
 
     def update_removed(self):
-        pass
+        self.clear_removed()
+        removed_deck = []
+        for c in player.sprinter.removed.cards:
+            removed_deck.append(c.value)
+        for c in removed_deck:
+            self.listbox_4.insert(tk.END, c)
 
-    def update_hand(self):
-        pass   
+    def update_select(self):
+        self.clear_select()
+        select_deck = []
+        for c in player.sprinter.select.cards:
+            select_deck.append(c.value)
+        for c in select_deck:
+            self.listbox_5.insert(tk.END, c)
+
+
+class Turn_Frame(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.parent = parent
+        self.widgets()
+    
+    def widgets(self):
+        
+        self.label_turn = tk.Label(self, text = 'Current turn')
+        self.listbox_turn = tk.Listbox(self)
+        self.button_turn = tk.Button(self, text = 'Next Turn',
+                                     command = self.next_turn)
+        
+        self.listbox_turn.configure(height = 1, justify="center")
+        
+        self.label_turn.grid(row = 0, column = 0)
+        self.listbox_turn.grid(row = 1, column = 0)
+        self.button_turn.grid(row = 2, column = 0)
+        
+        self.show_turn()
+    
+    def next_turn(self):
+        turn.next_turn()
+        self.show_turn()
+        
+        gui.frame_r.next_turn()
+        gui.frame_s.next_turn()
+    
+    def show_turn(self):
+        self.listbox_turn.delete(0, tk.END)
+        self.listbox_turn.insert(tk.END, turn.turn_no)
+        
 
 class Game_Exhaust_Frame(tk.Frame):
     def __init__(self, parent):
@@ -302,16 +407,20 @@ class Game_Exhaust_Frame(tk.Frame):
         self.button_4.grid(row = 2, column = 1)
 
     def add_roller_ex(self):
-        pass
-    
+        player.add_exhaust(player.roller, False)
+        gui.frame_r.update_game_state()
+            
     def rem_roller_ex(self):
-        pass
+        player.remove_exhaust(player.roller, False)
+        gui.frame_r.update_game_state()
     
     def add_sprinter_ex(self):
-        pass
+        player.add_exhaust(player.sprinter, False)
+        gui.frame_s.update_game_state()
     
     def rem_sprinter_ex(self):
-        pass
+        player.remove_exhaust(player.sprinter, False)
+        gui.frame_s.update_game_state()
         
         
 class Pre_Exhaust_Frame(tk.Frame):
@@ -346,20 +455,35 @@ class Pre_Exhaust_Frame(tk.Frame):
         self.button_4.grid(row = 2, column = 1)
 
     def add_roller_ex(self):
-        pass
-    
+        player.add_exhaust(player.roller, True)
+        gui.frame_r.update_game_state()
+            
     def rem_roller_ex(self):
-        pass
+        player.remove_exhaust(player.roller, True)
+        gui.frame_r.update_game_state()
     
     def add_sprinter_ex(self):
-        pass
+        player.add_exhaust(player.sprinter, True)
+        gui.frame_s.update_game_state()
     
     def rem_sprinter_ex(self):
-        pass
+        player.remove_exhaust(player.sprinter, True)
+        gui.frame_s.update_game_state()
+
+
+class Turn():
+    def __init__(self):
+        self.turn_no = 1
+    
+    def next_turn(self):
+        self.turn_no = self.turn_no + 1
+
 
 if __name__=='__main__':
     
     player = fb.Player()
+    
+    turn = Turn()
 
     root = tk.Tk()
     gui = Flamme_GUI(root)

@@ -29,34 +29,14 @@ class Player():
         self.draw_amount = 4
         
         # Make the roller and sprinter cards
-        roller_cards = self.build({3:3, 4:3, 5:3, 6:3, 7:3})
-        sprinter_cards = self.build({2:3, 3:3, 4:3, 5:3, 9:3})
+        roller_cards = self.build({'3':3, '4':3, '5':3, '6':3, '7':3})
+        sprinter_cards = self.build({'2':3, '3':3, '4':3, '5':3, '9':3})
         
         # Create roller card areas
         self.roller = MasterDeck("roller", roller_cards)
         
         #Create sprinter card areas
         self.sprinter = MasterDeck("sprinter", sprinter_cards)
-        
-    def draw(self, deck_name):
-        if deck_name == 'roller':
-            self.draw_hand(self.roller, self.draw_amount)
-        else:
-            self.draw_hand(self.sprinter, self.draw_amount)
-
-    def exhaust(self, deck_name, pre = False):
-        # discard_deck, e.g. self.roller.discard
-        if deck_name == 'roller':
-            self.add_exhaust(self.roller, pre)
-        else:
-            self.add_exhaust(self.sprinter, pre)
-
-    def add_exhaust(self, deck, pre):
-        if pre == False:
-            deck.discard.cards.append(Card(2))
-        else:
-            deck.draw.cards.append(Card(2))
-            deck.draw.shuffle()            
 
     def build(self, deck_dict):
         card_list = []
@@ -64,9 +44,6 @@ class Player():
             for x in range(1, v + 1):
                 card_list.append(Card(k))
         return card_list
-
-    def check_remain(self, deck):
-        return len(deck.cards)
 
 
     def draw_hand(self, deck, draw_amount):
@@ -85,44 +62,59 @@ class Player():
                         self.reshuffle_discard(deck.discard, deck.draw)
                 deck.hand.cards.append(deck.draw.draw_card())
             deck.turn = False
-
+            
     def select_card_to_play(self, hand, select, discard, card_value):            
         card_found = False
         
         for c in hand.cards:
-            if int(card_value) == c.value:
+            if card_value == c.value:
                 card_found = True
             
         if card_found:
             for c in hand.cards:
-                if int(card_value) == c.value:
+                if card_value == c.value:
                     select.cards.append(hand.draw_card(hand.cards.index(c)))
-                break
-            print('len is ', len(hand.cards))
+                    break
             for c in range(len(hand.cards)):
                 discard.cards.append(hand.draw_card(0))
         else:
             print("I couldn't find that card. Please try and enter the \
                   value again.")
-     
 
-            
+    def add_exhaust(self, deck, pre):
+        if pre == False:
+            deck.discard.cards.append(Card('ex2'))
+        else:
+            deck.draw.cards.append(Card('ex2'))
+            deck.draw.shuffle()
+
+    def remove_exhaust(self, deck, pre):
+        if pre == False:
+            for c in deck.discard.cards:
+                if 'ex2' == c.value:
+                    deck.discard.cards.index(c)
+                    del deck.discard.cards[deck.discard.cards.index(c)]
+                    break
+        else:
+            for c in deck.draw.cards:
+                if 'ex2' == c.value:
+                    deck.draw.cards.index(c)
+                    del deck.draw.cards[deck.draw.cards.index(c)]                    
+                    deck.draw.shuffle()
+                    break
+
+    def check_remain(self, deck):
+        return len(deck.cards)
+              
     def reshuffle_discard(self, discard, deck):
         for c in range(len(discard.cards)):
             deck.cards.append(discard.draw_card())
         deck.shuffle()
-
-    def end_turn(self):
-        #Need to send each selected card to removed
-        self.remove_select(self.roller)
-        self.remove_select(self.sprinter)
-    
+ 
     def remove_select(self, deck):
         deck.removed.cards.append(deck.select.draw_card())
         deck.turn = True
     
-
-
 
                 
 
@@ -159,16 +151,4 @@ class Card:
 
     def __str__(self):
         return str(self.value)
-
-
-
-def numeric_input():
-    going = True
-    while going:
-        num_in = input()
-        try:
-            num_in = int(num_in)
-            going = False
-        except:
-            print('I don\'t think you entered a number. Try again.')
-    return num_in            
+         
