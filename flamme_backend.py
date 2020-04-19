@@ -46,40 +46,44 @@ class Player():
         return card_list
 
 
-    def draw_hand(self, deck, draw_amount):
-        oppo = self.sprinter if deck == self.roller else self.roller
-        if self.check_remain(oppo.hand) > 0:
-            print('Must select a card from your drawn hand before drawing\
-                  from this deck.')
-        elif deck.turn == False:
-            print('You have already made the selection for this deck this turn.')
-        else:
-            for d in range(draw_amount):
-                if self.check_remain(deck.draw) <= 0:
-                    if self.check_remain(deck.discard) <= 0:
-                        break
-                    else:
-                        self.reshuffle_discard(deck.discard, deck.draw)
-                deck.hand.cards.append(deck.draw.draw_card())
-            deck.turn = False
+    def draw_hand(self, deck):
+#        oppo = self.sprinter if deck == self.roller else self.roller
+#        if self.check_remain(oppo.hand) > 0:
+#            print('Must select a card from your drawn hand before drawing\
+#                  from this deck.')
+#        elif deck.turn == False:
+#            print('You have already made the selection for this deck this turn.')
+#        else:
+        for d in range(self.draw_amount):
+            if self.check_remain(deck.draw) <= 0:
+                if self.check_remain(deck.discard) <= 0:
+                    break
+                else:
+                    self.reshuffle_discard(deck.discard, deck.draw)
+            deck.hand.cards.append(deck.draw.draw_card())
+        deck.turn = False
             
-    def select_card_to_play(self, hand, select, discard, card_value):            
-        card_found = False
-        
+    def select_card_to_play(self, hand, select, discard, card_value):                        
         for c in hand.cards:
             if card_value == c.value:
-                card_found = True
-            
-        if card_found:
-            for c in hand.cards:
-                if card_value == c.value:
-                    select.cards.append(hand.draw_card(hand.cards.index(c)))
-                    break
-            for c in range(len(hand.cards)):
-                discard.cards.append(hand.draw_card(0))
+                select.cards.append(hand.draw_card(hand.cards.index(c)))
+                break
+        for c in range(len(hand.cards)):
+            discard.cards.append(hand.draw_card(0))
+
+
+    def found_selected_card(self, hand, card_value):
+        for c in hand.cards:
+            if card_value == c.value:
+                return True
+        return False
+
+    def can_be_drawn(self, deck):
+        oppo = self.sprinter if deck == self.roller else self.roller
+        if self.check_remain(oppo.hand) > 0:
+            return False
         else:
-            print("I couldn't find that card. Please try and enter the \
-                  value again.")
+            return True
 
     def add_exhaust(self, deck, pre):
         if pre == False:
@@ -113,8 +117,10 @@ class Player():
  
     def remove_select(self, deck):
         deck.removed.cards.append(deck.select.draw_card())
-        deck.turn = True
+#        deck.turn = True
     
+    def end_cleanup(self, deck):
+        deck.turn = True
 
                 
 

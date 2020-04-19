@@ -8,6 +8,7 @@ Created on Mon Apr 13 14:45:22 2020
 import flamme_backend as fb
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 
 
 class Flamme_GUI():
@@ -44,7 +45,7 @@ class Flamme_GUI():
         self.frame_turn.grid(row = 3, column = 3)
         
         self.frame_game_ex = Game_Exhaust_Frame(self.parent)
-        self.frame_game_ex.grid(row = 3, column = 5, columnspan = 3)
+        self.frame_game_ex.grid(row = 3, column = 5, columnspan = 4)
 
         
 
@@ -58,7 +59,7 @@ class Roller_Frame(tk.Frame):
     
     def widgets(self):
         
-        self.selected = tk.StringVar()
+        #self.selected = tk.StringVar()
         
         self.label_1 = tk.Label(self, text = 'roller draw deck')
         self.label_2 = tk.Label(self, text = 'You have drawn...')
@@ -67,7 +68,7 @@ class Roller_Frame(tk.Frame):
         self.label_5 = tk.Label(self, text = 'Removed pile')
         self.label_6 = tk.Label(self, text = 'You have selected')
     
-        self.entry_1 = tk.Entry(self, textvariable = self.selected)
+        #self.entry_1 = tk.Entry(self, textvariable = self.selected)
         
         self.button_1 = ttk.Button(self, text = 'Draw roller',
                                    command = self.draw_hand)
@@ -76,23 +77,23 @@ class Roller_Frame(tk.Frame):
                                    command = self.select)
         
         self.listbox_1 = tk.Listbox(self)
-        self.listbox_2 = tk.Listbox(self)
+        self.listbox_2 = tk.Listbox(self, selectmode = 'SINGLE')
         self.listbox_3 = tk.Listbox(self)
         self.listbox_4 = tk.Listbox(self)        
         self.listbox_5 = tk.Listbox(self)
 
         self.label_1.grid(row = 0, column = 0)
         self.label_2.grid(row = 0, column = 2)
-        self.label_3.grid(row = 0, column = 3, columnspan = 2)
+        self.label_3.grid(row = 0, column = 3)
         self.label_4.grid(row = 0, column = 5)
         self.label_5.grid(row = 0, column = 6)
         self.label_6.grid(row = 2, column = 3)
     
-        self.entry_1.grid(row = 1, column = 3)
+        #self.entry_1.grid(row = 1, column = 3)
         
         self.button_1.grid(row = 1, column = 1)
         
-        self.button_2.grid(row = 1, column = 4)
+        self.button_2.grid(row = 1, column = 3)
         
         self.listbox_1.configure(height = 20, justify="center")
         self.listbox_2.configure(height = 20, justify="center")
@@ -120,23 +121,36 @@ class Roller_Frame(tk.Frame):
 
     def next_turn(self):
         player.remove_select(player.roller) 
+        player.end_cleanup(player.roller)
         self.update_game_state()
 
                 
-    def draw_hand(self):
-        if player.roller.turn == True:
-            player.draw_hand(player.roller, 4)
-        
-            self.update_game_state()
+    def draw_hand(self):        
+        can_draw = player.can_be_drawn(player.roller)
+        if can_draw:
+            if player.roller.turn == True:
+                player.draw_hand(player.roller)            
+                self.update_game_state()
+            else:
+                self.turn_error()
+        else:
+            self.draw_error()      
 
 
     def select(self):
-        player.select_card_to_play(player.roller.hand, 
-                                   player.roller.select, 
-                                   player.roller.discard,
-                                   self.selected.get())
-        self.entry_1.delete(0, tk.END)
-        self.update_game_state()       
+        all_items = self.listbox_2.get(0, tk.END)
+        sel_idx = self.listbox_2.curselection()
+        card_value = all_items[sel_idx[0]]
+        found = player.found_selected_card(player.roller.hand, card_value)
+        if found:
+            player.select_card_to_play(player.roller.hand, 
+                                       player.roller.select, 
+                                       player.roller.discard,
+                                       card_value)
+        else:
+            self.cant_find_error()
+        #self.entry_1.delete(0, tk.END)
+        self.update_game_state()
         
 
     def clear_draw(self):
@@ -195,6 +209,20 @@ class Roller_Frame(tk.Frame):
         for c in select_deck:
             self.listbox_5.insert(tk.END, c)
 
+    def draw_error(self):
+        messagebox.showerror(title = 'Draw error',
+                                message = 'Ye cannae draw cards fur this rider \'til ye hae selcted caird fur ither rider.')
+
+    def turn_error(self):
+        messagebox.showerror(title = 'Turn error',
+                                message = 'Ye hae awready drawn cards fur this rider this gang.')
+
+
+    def cant_find_error(self):
+        messagebox.showerror(title = 'Not found error',
+                                message = 'Ah cannae fin\' that caird. Huv a go again.')
+        
+
 class Sprinter_Frame(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
@@ -205,7 +233,7 @@ class Sprinter_Frame(tk.Frame):
     
     def widgets(self):
         
-        self.selected = tk.StringVar()
+        #self.selected = tk.StringVar()
         
         self.label_1 = tk.Label(self, text = 'sprinter draw deck')
         self.label_2 = tk.Label(self, text = 'You have drawn...')
@@ -214,7 +242,7 @@ class Sprinter_Frame(tk.Frame):
         self.label_5 = tk.Label(self, text = 'Removed pile')
         self.label_6 = tk.Label(self, text = 'You have selected')
     
-        self.entry_1 = tk.Entry(self, textvariable = self.selected)
+        #self.entry_1 = tk.Entry(self, textvariable = self.selected)
         
         self.button_1 = ttk.Button(self, text = 'Draw sprinter',
                                    command = self.draw_hand)
@@ -223,7 +251,7 @@ class Sprinter_Frame(tk.Frame):
                                    command = self.select)
         
         self.listbox_1 = tk.Listbox(self)
-        self.listbox_2 = tk.Listbox(self)
+        self.listbox_2 = tk.Listbox(self, selectmode = 'SINGLE')
         self.listbox_3 = tk.Listbox(self)
         self.listbox_4 = tk.Listbox(self)
         self.listbox_5 = tk.Listbox(self)
@@ -231,16 +259,16 @@ class Sprinter_Frame(tk.Frame):
 
         self.label_1.grid(row = 0, column = 0)
         self.label_2.grid(row = 0, column = 2)
-        self.label_3.grid(row = 0, column = 3, columnspan = 2)
+        self.label_3.grid(row = 0, column = 3)
         self.label_4.grid(row = 0, column = 5)
         self.label_5.grid(row = 0, column = 6)
         self.label_6.grid(row = 2, column = 3)
     
-        self.entry_1.grid(row = 1, column = 3)
+        #self.entry_1.grid(row = 1, column = 3)
         
         self.button_1.grid(row = 1, column = 1)
         
-        self.button_2.grid(row = 1, column = 4)
+        self.button_2.grid(row = 1, column = 3)
 
         self.listbox_1.configure(height = 20, justify="center")
         self.listbox_2.configure(height = 20, justify="center")
@@ -266,23 +294,36 @@ class Sprinter_Frame(tk.Frame):
 
     def next_turn(self):
         player.remove_select(player.sprinter) 
+        player.end_cleanup(player.sprinter)
         self.update_game_state()
 
                 
-    def draw_hand(self):
-        if player.sprinter.turn == True:
-            player.draw_hand(player.sprinter, 4)
-        
-            self.update_game_state()
-
+    def draw_hand(self):        
+        can_draw = player.can_be_drawn(player.sprinter)
+        if can_draw:
+            if player.sprinter.turn == True:
+                player.draw_hand(player.sprinter)            
+                self.update_game_state()
+            else:
+                self.turn_error()
+        else:
+            self.draw_error()        
 
     def select(self):
-        player.select_card_to_play(player.sprinter.hand, 
-                                   player.sprinter.select, 
-                                   player.sprinter.discard,
-                                   self.selected.get())
-        self.entry_1.delete(0, tk.END)
-        self.update_game_state()       
+        #card_value = self.selected.get()
+        all_items = self.listbox_2.get(0, tk.END)
+        sel_idx = self.listbox_2.curselection()
+        card_value = all_items[sel_idx[0]]
+        found = player.found_selected_card(player.sprinter.hand, card_value)
+        if found:
+            player.select_card_to_play(player.sprinter.hand, 
+                                       player.sprinter.select, 
+                                       player.sprinter.discard,
+                                       card_value)
+        else:
+            self.cant_find_error()
+        #self.entry_1.delete(0, tk.END)
+        self.update_game_state()
         
 
     def clear_draw(self):
@@ -341,6 +382,18 @@ class Sprinter_Frame(tk.Frame):
         for c in select_deck:
             self.listbox_5.insert(tk.END, c)
 
+    def draw_error(self):
+        messagebox.showerror(title = 'Draw error',
+                                message = 'Ye cannae draw cards fur this rider \'til ye hae selcted caird fur ither rider.')
+
+    def turn_error(self):
+        messagebox.showerror(title = 'Turn error',
+                                message = 'Ye hae awready drawn cards fur this rider this gang.')
+
+    def cant_find_error(self):
+        messagebox.showerror(title = 'Not found error',
+                                message = 'Ah cannae fin\' that caird. Huv a go again.')
+         
 
 class Turn_Frame(tk.Frame):
     def __init__(self, parent):
