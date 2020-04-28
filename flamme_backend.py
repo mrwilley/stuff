@@ -6,7 +6,7 @@ Created on Fri Apr 10 14:36:10 2020
 """
 
 import random
-
+import json
 
 class MasterDeck():
     def __init__(self, deck_name, cards):
@@ -34,8 +34,6 @@ class Player():
         
         # Create roller card areas
         self.roller = MasterDeck("roller", roller_cards)
-        
-        #Create sprinter card areas
         self.sprinter = MasterDeck("sprinter", sprinter_cards)
 
     def build(self, deck_dict):
@@ -45,15 +43,7 @@ class Player():
                 card_list.append(Card(k))
         return card_list
 
-
     def draw_hand(self, deck):
-#        oppo = self.sprinter if deck == self.roller else self.roller
-#        if self.check_remain(oppo.hand) > 0:
-#            print('Must select a card from your drawn hand before drawing\
-#                  from this deck.')
-#        elif deck.turn == False:
-#            print('You have already made the selection for this deck this turn.')
-#        else:
         for d in range(self.draw_amount):
             if self.check_remain(deck.draw) <= 0:
                 if self.check_remain(deck.discard) <= 0:
@@ -68,9 +58,11 @@ class Player():
             if card_value == c.value:
                 select.cards.append(hand.draw_card(hand.cards.index(c)))
                 break
+        self.discard_hand(hand, discard)
+
+    def discard_hand(self, hand, discard):
         for c in range(len(hand.cards)):
             discard.cards.append(hand.draw_card(0))
-
 
     def found_selected_card(self, hand, card_value):
         for c in hand.cards:
@@ -122,8 +114,29 @@ class Player():
     def end_cleanup(self, deck):
         deck.turn = True
 
-                
+    def load_saved_data(self, data):
+        self.remove_all_cards()
+        self.write_new_deck_data(data)
+    
+    def remove_all_cards(self):
+        for r in [self.roller, self.sprinter]:
+            for d in [r.draw, r.hand, r.select, r.discard, r.removed]:
+                d.remove_all()
+    
+    def write_new_deck_data(self, data):
+        riders = [self.roller, self.sprinter]
+        rider_names = ['roller', 'sprinter']
+        deck_names = ['draw', 'hand', 'select', 'discard', 'removed']
+        for rider, rider_name in zip(riders, rider_names):
+            rider_decks = [rider.draw, rider.hand, rider.select, 
+                           rider.discard, rider.removed]
+            for rider_deck, deck_name in zip(rider_decks, deck_names):
+                rider_deck.add_to_deck(self.data['rider'][rider_name][deck_name])
 
+#    def rider_decks(self, rider):
+#        return [rider.draw, rider.hand, rider.select, rider.discard, rider.removed]
+            
+                
 class Deck:
     def __init__(self):
         self.cards = []
@@ -143,7 +156,16 @@ class Deck:
     def add_to_deck(self, list_of_cards):
         for c in list_of_cards:
             self.cards.append(c)
+    
+    def remove_all(self):
+        for c in self.cards:
+            self.cards.remove(c)
 
+    def card_value_to_list(self):
+        list_ = []
+        for c in self.cards:
+            list_.append(c.value)
+        return list_
 
 class Card:
     def __init__(self, value):
@@ -157,4 +179,87 @@ class Card:
 
     def __str__(self):
         return str(self.value)
-         
+
+
+class Turn():
+    def __init__(self):
+        self.turn_no = 1
+    
+    def next_turn(self):
+        self.turn_no = self.turn_no + 1
+
+
+
+class Record():
+    def __init__(self):
+        self.data = {}
+        self.can_save = False
+        self.new_game()
+
+    def file_name(self):
+        self.file_name = self.player + '_' + self.color + '.json'
+
+    def append_data(self, lst, to_append):
+        lst.append(to_append)
+
+    def write_data(self):
+        with open('save_data.json', 'w') as outfile:
+            json.dump(self.data, outfile, indent = 4)
+    
+    def new_game(self):              
+        deck_dict = {'draw' : [],
+                'hand' : [],
+                'select' : [],
+                'discard' : [],
+                'removed' : []}
+        self.data['turn_no'] : 1
+        self.data['rider'] = {'roller' : deck_dict, 'sprinter' : deck_dict}        
+        self.data['played'] = {'roller': {}, 'sprinter' :{}}
+
+    def update_data_decks(self, rider, rider_type, turn):
+        self.data['turn_no'] = turn.turn_no
+        print(rider_type)
+        deck_names = ['draw', 'hand', 'select', 'discard', 'removed']
+          
+        rider_decks = [rider.draw, rider.hand, rider.select, 
+                       rider.discard, rider.removed]          
+            
+        for deck_name, rider_deck in zip(deck_names, rider_decks):
+            
+            self.data['rider'][rider_type][deck_name] = []
+            
+            card_list = rider_deck.card_value_to_list()
+            
+            for c in card_list:
+                self.data['rider'][rider_type][deck_name].append(c)
+    
+    def write_played_card(self):
+        pass
+
+    def read_data(self, filename):
+        with open(filename) as json_file:
+            self.data = json.load(json_file)
+
+    def save_game(self):
+        self.write_data()
+    
+    def load_game(self, filename, player):
+        #self.filename = filename
+        self.read_data(filename)
+        player.load_saved_data(self.data)
+        self.save_ok()
+   
+    def end_game(self):
+        self.write_data()
+
+    def get_player_name(self, player_name):
+        self.player_name = player_name
+
+    def get_player_color(self, player_color):
+        self.player_color = player_color
+    
+    def get_file_name(self, file_name):
+        self.file_name = file_name
+
+    def save_ok(self):
+        self.can_save = True        
